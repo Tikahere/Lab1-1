@@ -11,7 +11,7 @@ public class DGraph {
 	public void addEdge(String word1,String word2){
 		int index1 = -1;
 		int index2 = -1;
-		//找到单词1对应的节点，或者创建一个
+		////找到单词1对应的节点，或者创建一个
 		for(int i = 0;i<vertex;i++){
 			if(adj[i].getHead().word.equals(word1)){
 				index1 = i;
