@@ -1,101 +1,339 @@
-import java.util.regex.Matcher;
-import java.util.Random;
-import java.util.regex.*;
-import java.awt.Color;
+
+//import java.awt.Color;
 import java.io.File;
+import java.util.Random;
+
+//import java.util.regex.*;
+
+//import java.util.regex.Matcher;
+
+/**
+ *
+ *
+ * @author
+ */
 public class DGraph {
-	public DGraph(){
+	
+	public static final int		MAX		= 32767;
+	
+	private final LinkedList[]	adj		= new LinkedList[MAX];
+	
+	private int					version	= 1;
+	
+	private int					vertex;							// num of vertex
+	
+	public DGraph() {
 		vertex = 0;
-		edge = 0;
 	}
-	public void addEdge(String word1,String word2){
+	
+	/**
+	 *
+	 * leixing. duziyuan
+	 */
+	
+	public void addEdge(String word1, String word2) {
 		int index1 = -1;
 		int index2 = -1;
-		//ÕÒµ½µ¥´Ê1¶ÔÓ¦µÄ½Úµã£¬»òÕß´´½¨Ò»¸ö
-		for(int i = 0;i<vertex;i++){
-			if(adj[i].getHead().word.equals(word1)){
+		// ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ó¦ï¿½Ä½Úµã£¬ï¿½ï¿½ï¿½ß´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
+		for (int i = 0; i < vertex; i++) {
+			if (adj[i].getHead().word.equals(word1)) {
 				index1 = i;
 			}
 		}
-		if(-1 == index1){
+		if (-1 == index1) {
 			adj[vertex] = new LinkedList(word1);
 			index1 = vertex;
 			vertex++;
 		}
-		//ÕÒµ½µ¥´Ê2¶ÔÓ¦µÄ½Úµã£¬»òÕß´´½¨Ò»¸ö
-		for(int i = 0;i<vertex;i++){
-			if(adj[i].getHead().word.equals(word2)){
+		// ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½Ó¦ï¿½Ä½Úµã£¬ï¿½ï¿½ï¿½ß´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
+		for (int i = 0; i < vertex; i++) {
+			if (adj[i].getHead().word.equals(word2)) {
 				index2 = i;
 			}
 		}
-		if(-1 == index2){
+		if (-1 == index2) {
 			adj[vertex] = new LinkedList(word2);
 			index2 = vertex;
 			vertex++;
 		}
-		for(Node node =adj[index1].getHead().next;node!=null;node=node.next){
-			if(node.word.equals(word2)){
+		for (Node node = adj[index1].getHead().next; node != null; node = node.next) {
+			if (node.word.equals(word2)) {
 				node.weight++;
 				return;
 			}
 		}
-		adj[index1].addNode(word2,index2);
+		adj[index1].addNode(word2, index2);
 	}
-	public String queryBridgeWords(String word1,String word2){
-		int index1 = -1,index2=-1,index3;
-		Node node3,node4;
-		for(int i=0;i<vertex;i++){
-			if(word1.equals(adj[i].getHead().word)){
+	
+	/**
+	 * ï¿½ï¿½ï¿½Â·ï¿½ï¿½. duziyuan
+	 */
+	public String[] calcShortestPath(String word1) { // ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½Dijkstraï¿½ã·¨,Ö»ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		final int[] path = new int[vertex]; // ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½
+		final boolean[] visited = new boolean[vertex]; // ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Ê¹ï¿½
+		final int[] dist = new int[vertex];
+		int index1 = -1; // word1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		// int index2 = -1; //word2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		final String[] reply = new String[vertex - 1];
+		for (int i = 0; i < vertex; i++) {
+			if (adj[i].getHead().word.equals(word1)) { // ï¿½Òµï¿½ï¿½ï¿½word1Îªï¿½ï¿½ï¿½ï¿½Ä±ï¿½
 				index1 = i;
 			}
-			if(word1.equals(adj[i].getHead().word)){
-				index2 = i;
-			}
+			dist[i] = MAX;
+			visited[i] = false;
+			
 		}
-		if(index1==-1||index2==-1){
-			return "No \""+word1+"\" or \""+word2+"\" in the graph!";
-		}
-		String words = "";
-		node3 = adj[index1].getHead().next;
-		while(node3!= null){
-			index3 = node3.num;
-			node4 = adj[index3].getHead().next;
-			while(node4!=null){
-				if(node4.word.equals(word2)){
-					words = words+node3.word+",";
-					break;
-				}
-				node4 = node4.next;
-			}
-			node3 = node3.next;
-		}
-		if(words.equals("")){
-			return "No bridge words from \""+word1+"\" to \""+word2+"\"!";
-		}else{
-			return "The bridge words from \""+word1 +"\" to \""+word2 +"\" are:"+words;
+		if (index1 == -1) {
+			reply[0] = "ï¿½ï¿½ï¿½Ê²ï¿½ï¿½ï¿½ï¿½Ú£ï¿½";
+			return reply;
 		}
 		
+		visited[index1] = true;
+		dist[index1] = 0;
+		Node verte = adj[index1].getHead().next; // word1ï¿½ï¿½ï¿½ï¿½ï¿½ÓµÄµï¿½
+		while (verte != null) {
+			dist[verte.num] = verte.weight;
+			path[verte.num] = index1;
+			verte = verte.next;
+		}
+		for (int i = 1; i < vertex; i++) { // zï¿½ï¿½ï¿½Ñ­ï¿½ï¿½(V-1)ï¿½ï¿½
+			
+			int mindist = MAX; // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+			int interVertex = index1; // Í¾ï¿½ï¿½ï¿½ï¿½ï¿½Ð¼ï¿½ï¿½
+			for (int j = 0; j < vertex; j++) {
+				if (!visited[j] && dist[j] < mindist) {
+					mindist = dist[j];
+					interVertex = j;
+				}
+			}
+			visited[interVertex] = true;
+			
+			Node interNode = adj[interVertex].getHead().next;
+			while (interNode != null) { // ï¿½ï¿½ï¿½ï¿½dist
+				if (!visited[interNode.num] && dist[interNode.num] > dist[interVertex] + interNode.weight) {
+					dist[interNode.num] = dist[interVertex] + interNode.weight;
+					path[interNode.num] = interVertex;
+				}
+				interNode = interNode.next;
+			}
+		}
+		final String[] wordPath = new String[vertex];
+		int num = 0;
+		for (int i = 0; i < vertex; i++) {
+			if (visited[i] == false) {
+				reply[num] = adj[i].getHead().word + " ï¿½ï¿½ï¿½É´ï£¡";
+				num++;
+			}
+			
+		}
+		for (int i = 0; i < vertex; i++) { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+			
+			if (i != index1 && visited[i] == true) {
+				wordPath[0] = adj[i].getHead().word;
+				int pathIndex = i;
+				int pathNum = 1;
+				while (path[pathIndex] != index1) { // ï¿½ï¿½Í¾ï¿½ï¿½ï¿½Äµï¿½ï¿½Ê¼ï¿½ï¿½ëµ½WordPathï¿½Ð£ï¿½Îªï¿½ï¿½ï¿½ï¿½
+					pathIndex = path[pathIndex];
+					wordPath[pathNum] = adj[pathIndex].getHead().word;
+					pathNum++;
+				}
+				final StringBuilder builder = new StringBuilder();
+				builder.append(word1);
+				for (int k = pathNum - 1; k >= 0; k--) {
+					builder.append(" " + wordPath[k]);
+				}
+				reply[num] = builder.toString();
+				num++;
+			}
+		}
+		
+		return reply;
 	}
-	public String oneBridgeWord(String word1,String word2){
-		int index1 = -1,index2=-1,index3;
-		Node node3,node4;
-		for(int i=0;i<vertex;i++){
-			if(word1.equals(adj[i].getHead().word)){
+	
+	/**
+	 * Õ¹Ê¾Í¼ï¿½ï¿½Â·ï¿½ï¿½. duziyuan
+	 */
+	// ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½Dijkstraï¿½ã·¨ï¿½Ä½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+	public String calcShortestPath(String word1, String word2) {
+		final int[][] path = new int[vertex][vertex]; // ï¿½ï¿½Â¼Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Úµï¿½
+		final boolean[] visited = new boolean[vertex]; // ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Ê¹ï¿½
+		final int[] dist = new int[vertex];
+		int index1 = -1; // word1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		int index2 = -1; // word2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		String reply = new String();
+		boolean flag = false; // ï¿½Ð¶ï¿½word2ï¿½Ç·ï¿½É´ï¿½
+		for (int i = 0; i < vertex; i++) {
+			if (adj[i].getHead().word.equals(word1)) { // ï¿½Òµï¿½ï¿½ï¿½word1Îªï¿½ï¿½ï¿½ï¿½Ä±ï¿½
 				index1 = i;
 			}
-			if(word1.equals(adj[i].getHead().word)){
+			if (adj[i].getHead().word.equals(word2)) { // ï¿½Òµï¿½ï¿½ï¿½word2Îªï¿½ï¿½ï¿½ï¿½Ä±ï¿½
+				index2 = i;
+			}
+			dist[i] = MAX;
+			visited[i] = false;
+			for (int j = 0; j < vertex; j++) {
+				path[i][j] = -1;
+			}
+		}
+		
+		if (index1 == -1 || index2 == -1) {
+			return "ï¿½ï¿½ï¿½Ê²ï¿½ï¿½ï¿½ï¿½Ú£ï¿½";
+		}
+		visited[index1] = true;
+		dist[index1] = 0;
+		Node vert = adj[index1].getHead().next; // word1ï¿½ï¿½ï¿½ï¿½ï¿½ÓµÄµï¿½
+		while (vert != null) {
+			dist[vert.num] = vert.weight;
+			path[vert.num][0] = index1; // ï¿½ï¿½ï¿½Ü»ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+			vert = vert.next;
+		}
+		for (int i = 1; i < vertex; i++) { // zï¿½ï¿½ï¿½Ñ­ï¿½ï¿½(V-1)ï¿½ï¿½
+			int mindist = MAX; // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+			for (int j = 0; j < vertex; j++) {
+				if (!visited[j] && dist[j] < mindist) {
+					mindist = dist[j];
+				}
+			}
+			final int[] interVertexs = new int[vertex];
+			int interVertexNum = 0;
+			for (int j = 0; j < vertex; j++) {
+				if (!visited[j] && dist[j] == mindist) {
+					interVertexs[interVertexNum] = j;
+					visited[j] = true;
+					interVertexNum++;
+				}
+			}
+			if (visited[index2]) { // ï¿½Ð¶ï¿½ï¿½Ç·ï¿½ï¿½ï¿½word2
+				flag = true;
+				break;
+			}
+			for (int k = 0; k < vertex; k++) {
+				if (visited[k]) { // ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Ä½Úµã£¬ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð©ï¿½Ñ·ï¿½ï¿½Ê¹ï¿½ï¿½Äµï¿½
+					Node notVisited = adj[k].getHead().next;
+					while (notVisited != null) {
+						if (!visited[notVisited.num]) { // Î´ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Äµï¿½ï¿½ï¿½Ô¸ï¿½ï¿½ï¿½dist
+							if (dist[notVisited.num] > dist[k] + notVisited.weight) { // ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½
+								dist[notVisited.num] = dist[k] + notVisited.weight;
+								// ï¿½Ä±ï¿½path
+								path[notVisited.num][0] = k;
+								for (int z = 1; z < vertex; z++) {
+									if (path[notVisited.num][z] >= 0) {
+										path[notVisited.num][z] = -1;
+									} else {
+										break;
+									}
+								}
+							} else if (dist[notVisited.num] == dist[k] + notVisited.weight) { // ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½path
+								for (int z = 0; z < vertex; z++) {
+									if (path[notVisited.num][z] == -1) {
+										path[notVisited.num][z] = k;
+										break;
+									}
+								}
+							}
+						}
+						notVisited = notVisited.next;
+					}
+				}
+			}
+			
+		}
+		if (flag == false) {
+			reply = "ï¿½ï¿½ï¿½É´ï£¡";
+			return reply;
+		}
+		reply = displayPath(index1, index2, path);
+		final String[] wordSplit = reply.split("@");
+		final StringBuilder replyBuilder = new StringBuilder();
+		
+		for (int j = 0; j < wordSplit.length; j++) {
+			wordSplit[j] = wordSplit[j] + " " + word2;
+			replyBuilder.append(wordSplit[j] + "@");
+		}
+		return replyBuilder.toString();
+	}
+	
+	/**
+	 * Õ¹Ê¾Â·ï¿½ï¿½. duziyuan
+	 */
+	public String displayPath(int start, int end, int[][] path) {
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Â·ï¿½ï¿½ ï¿½Ð¼ï¿½@ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÃµÝ¹é£¬ï¿½ï¿½ï¿½ï¿½
+		// startÎªï¿½ï¿½Ê¼ï¿½ï¿½Ô´ï¿½ã£¬endÎªï¿½Õµã£¬pathÎªï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½
+		if (start == end) {
+			return adj[start].getHead().word;
+		}
+		final StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < vertex; i++) {
+			if (path[end][i] != -1) {
+				final StringBuilder wordbuilder = new StringBuilder();
+				final String midString = displayPath(start, path[end][i], path);
+				final String[] pathWords = midString.split("@"); // ï¿½ï¿½@ï¿½Ö¿ï¿½ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½Ê±ï¿½ï¿½Ã¿ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½@ï¿½Ö¸ï¿½
+				for (int j = 0; j < pathWords.length; j++) {
+					if (path[end][i] != start) {
+						pathWords[j] = pathWords[j] + " " + adj[path[end][i]].getHead().word;
+					}
+					
+					wordbuilder.append(pathWords[j] + "@");
+				}
+				builder.append(wordbuilder.toString());
+			}
+		}
+		return builder.toString();
+	}
+	
+	/**
+	 * Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½. duziyuan
+	 */
+	public String generateNewText(String inputText) {
+		final String st = inputText.replaceAll("[\\p{Punct}\\p{Space}]+", " "); // ï¿½ï¿½ï¿½ï¿½É¿Õ¸ï¿½
+		final String[] words = st.trim().split("\\s+"); // ï¿½ï¿½ï¿½Õ¸ï¿½Ö¸ï¿½
+		if (words.length <= 2) {
+			return "the input text should be longer";
+		}
+		String text = words[0];
+		String word1;
+		String word2;
+		String word3;
+		for (int index = 0; index < words.length - 1; index++) {
+			word1 = words[index].toLowerCase();
+			word2 = words[index + 1].toLowerCase();
+			word3 = oneBridgeWord(word1, word2);
+			if (word3 == null) {
+				text = text + " " + word2;
+			} else {
+				text = text + " " + word3 + " " + word2;
+			}
+		}
+		return text;
+	}
+	
+	/**
+	 *
+	 * Ò»ï¿½ï¿½ï¿½Å½Ó´ï¿½. duziyuan
+	 */
+	public String oneBridgeWord(String word1, String word2) {
+		int index1 = -1;
+		int index2 = -1;
+		int index3;
+		Node node3;
+		Node node4;
+		for (int i = 0; i < vertex; i++) {
+			if (word1.equals(adj[i].getHead().word)) {
+				index1 = i;
+			}
+			if (word1.equals(adj[i].getHead().word)) {
 				index2 = i;
 			}
 		}
-		if(index1==-1||index2==-1){
+		if (index1 == -1 || index2 == -1) {
 			return null;
 		}
 		node3 = adj[index1].getHead().next;
-		while(node3!= null){
+		while (node3 != null) {
 			index3 = node3.num;
 			node4 = adj[index3].getHead().next;
-			while(node4!=null){
-				if(node4.word.equals(word2)){
+			while (node4 != null) {
+				if (node4.word.equals(word2)) {
 					return node3.word;
 				}
 				node4 = node4.next;
@@ -104,505 +342,285 @@ public class DGraph {
 		}
 		return null;
 	}
-	public String generateNewText(String inputText){
-		String s = inputText.replaceAll("[\\p{Punct}\\p{Space}]+", " ");  //±êµã±ä³É¿Õ¸ñ
-		String[] words = s.trim().split("\\s+");   //°´¿Õ¸ñ·Ö¸î
-		if(words.length<=2){
-			return "the input text should be longer";
-		}
-		String text = words[0];
-		String word1,word2,word3;
-		for(int index=0;index<words.length-1;index++){
-			word1= words[index].toLowerCase();
-			word2= words[index+1].toLowerCase();
-			word3=oneBridgeWord(word1,word2);
-			if(word3 == null){
-				text = text +" "+word2;
-			}else{
-				text = text +" "+word3 +" "+word2;
+	
+	/**
+	 *
+	 * ï¿½Å½Ó´ï¿½. duziyuan
+	 */
+	
+	public String queryBridgeWords(String word1, String word2) {
+		int index1 = -1;
+		int index2 = -1;
+		int index3;
+		Node node3;
+		Node node4;
+		for (int i = 0; i < vertex; i++) {
+			if (word1.equals(adj[i].getHead().word)) {
+				index1 = i;
+			}
+			if (word1.equals(adj[i].getHead().word)) {
+				index2 = i;
 			}
 		}
-		return text;
-	}
-	public String randomWalk()  //Ëæ»úÓÎ×ß,Ëæ»úÑ¡Ôñ½Úµã¿ªÊ¼ÓÎ×ß
-	{
-		int VertexNum = vertex;
-		String Reply = new String();
-		int MAXEdgeNum = 0;    //¶¥µã×î´ó³ö¶È
-		for(int i = 0 ;i< VertexNum;i++)
-		{
-			if(adj[i].nodeNum > MAXEdgeNum)
-				MAXEdgeNum = adj[i].nodeNum;
+		if (index1 == -1 || index2 == -1) {
+			return "No \"" + word1 + "\" or \"" + word2 + "\" in the graph!";
 		}
-		Random r = new Random();
-		int [][] WalkVisited = new int[VertexNum][MAXEdgeNum];  //±ê¼Ç×ß¹ýµÄ±ß
-		for(int i = 0;i<VertexNum;i++)
-		{
-			for(int j = 0 ;j < MAXEdgeNum;j++)
-				WalkVisited[i][j] = -1;
-		}
-		int WalkVertex = -1;   //Ëæ»úÓÎ×ßÆðÊ¼µÄ½ÚµãË÷Òý
-		while(WalkVertex < 0)
-			WalkVertex = r.nextInt() % VertexNum; 
-		StringBuilder WordBuilder = new StringBuilder();
-		String firstword = adj[WalkVertex].getHead().word;
-		WordBuilder.append(firstword);
-		while(true)
-		{
-			int next = -1;  //Ëæ»úµÄ±ß
-			if(adj[WalkVertex].nodeNum == 0)
-				break;    //¶¥µãµÄ³ö¶ÈÎª0
-			while(next < 0)
-				next = r.nextInt() % adj[WalkVertex].nodeNum;
-			Node nextNode = adj[WalkVertex].getHead().next;
-			for(int j = 0 ;j < next;j++)
-				nextNode = nextNode.next;
-			
-			int nextVertex = nextNode.num;        //ÓÎ×ßµÄÏÂÒ»Ìõ±ß
-			WordBuilder.append(" "+adj[nextVertex].getHead().word);
-			boolean flag = false;
-			int EdgeNum = 0;
-			for(int j = 0; j < adj[WalkVertex].nodeNum;j++)  //²éÕÒ±ßÊÇ·ñÒÑ×ß¹ý
-			{
-				if (WalkVisited[WalkVertex][j] == -1)
-				{
-					EdgeNum = j;
+		String words = "";
+		node3 = adj[index1].getHead().next;
+		while (node3 != null) {
+			index3 = node3.num;
+			node4 = adj[index3].getHead().next;
+			while (node4 != null) {
+				if (node4.word.equals(word2)) {
+					words = words + node3.word + ",";
 					break;
 				}
-				else if (WalkVisited[WalkVertex][j] == nextVertex)
-				{
+				node4 = node4.next;
+			}
+			node3 = node3.next;
+		}
+		if (words.equals("")) {
+			return "No bridge words from \"" + word1 + "\" to \"" + word2 + "\"!";
+		} else {
+			return "The bridge words from \"" + word1 + "\" to \"" + word2 + "\" are:" + words;
+		}
+	}
+	
+	/**
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½. duziyuan
+	 */
+	public String randomWalk() { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½Úµã¿ªÊ¼ï¿½ï¿½ï¿½ï¿½
+		final int vertexNum = vertex; // ï¿½Úµï¿½ï¿½ï¿½ï¿½
+		String reply = new String();
+		int maxEdgeNum = 0; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		for (int i = 0; i < vertexNum; i++) {
+			if (adj[i].nodeNum > maxEdgeNum) {
+				maxEdgeNum = adj[i].nodeNum;
+			}
+		}
+		final Random ra = new Random();
+		final int[][] walkVisited = new int[vertexNum][maxEdgeNum]; // ï¿½ï¿½ï¿½ï¿½ß¹ï¿½ï¿½Ä±ï¿½
+		for (int i = 0; i < vertexNum; i++) {
+			for (int j = 0; j < maxEdgeNum; j++) {
+				walkVisited[i][j] = -1;
+			}
+		}
+		int walkVertex = -1; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½Ä½Úµï¿½ï¿½ï¿½ï¿½ï¿½
+		while (walkVertex < 0) {
+			walkVertex = ra.nextInt() % vertexNum;
+		}
+		// System.out.println(WalkVertex);
+		final StringBuilder wordBuilder = new StringBuilder();
+		final String firstword = adj[walkVertex].getHead().word;
+		wordBuilder.append(firstword);
+		while (true) {
+			int next = -1; // ï¿½ï¿½ï¿½ï¿½Ä±ï¿½
+			if (adj[walkVertex].nodeNum == 0) {
+				break; // ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½Îª0
+			}
+			while (next < 0) {
+				next = ra.nextInt() % adj[walkVertex].nodeNum;
+			}
+			Node nextNode = adj[walkVertex].getHead().next;
+			for (int j = 0; j < next; j++) {
+				nextNode = nextNode.next;
+			}
+			final int nextVertex = nextNode.num; // ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½
+			wordBuilder.append(" " + adj[nextVertex].getHead().word);
+			boolean flag = false;
+			int edgeNum = 0;
+			for (int j = 0; j < adj[walkVertex].nodeNum; j++) { // ï¿½ï¿½ï¿½Ò±ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ß¹ï¿½
+				if (walkVisited[walkVertex][j] == -1) {
+					edgeNum = j;
+					break;
+				} else if (walkVisited[walkVertex][j] == nextVertex) {
 					flag = true;
 					break;
 				}
-				
 			}
-			
-			if(flag)    //Èç¹û·ÃÎÊ¹ýÍÆ³ö
+			if (flag) { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Æ³ï¿½
 				break;
-			else        //·ñÔò¼ÌÐøÑ°±ß
-			{
-				WalkVisited[WalkVertex][EdgeNum] = nextVertex;
-				WalkVertex = nextVertex;
+			} else { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ°ï¿½ï¿½
+				walkVisited[walkVertex][edgeNum] = nextVertex;
+				walkVertex = nextVertex;
 			}
-				
 		}
-		Reply = WordBuilder.toString();
-		return Reply;
+		// WordBuilder.append(" "+adj[nextVertex].first.Word);
+		reply = wordBuilder.toString();
+		return reply;
 	}
 
-	public String showGraph(String resultsFileName)
-	{//return fileName
-		GraphViz gv = new GraphViz();
-		 gv.addln(gv.start_graph());
-		 for(int i=0;i<vertex;i++){
-			 Node head = adj[i].getHead();
-			 Node tail = adj[i].getHead().next;
-			 while(null != tail){
-				 gv.addln(head.word + "->" + tail.word+"[label="+tail.weight+"]");
-				 tail = tail.next;
-			 }
-		 }
-		 gv.addln(gv.end_graph());
-		 System.out.println(gv.getDotSource());
-
-
-        String type = "gif";
-        // String type = "dot";
-        // String type = "fig"; // open with xfig
-        // String type = "pdf";
-        // String type = "ps";
-        // String type = "svg"; // open with inkscape
-        // String type = "png";
-        // String type = "plain";
-        String graphFileName = resultsFileName.substring(0, resultsFileName.length()-4) + "." + type;
-        File out = new File(graphFileName);
-        gv.writeGraphToFile(gv.getGraph(gv.getDotSource(), type), out);
+	/**
+	 * Õ¹Ê¾Í¼. duziyuan
+	 */
+	public String showGraph(String resultsFileName) {
+		final GraphViz gv = new GraphViz();
+		gv.addln(gv.start_graph());
+		for (int i = 0; i < vertex; i++) {
+			final Node head = adj[i].getHead();
+			Node tail = adj[i].getHead().next;
+			while (null != tail) {
+				gv.addln(head.word + "->" + tail.word + "[label=" + tail.weight + "]");
+				tail = tail.next;
+			}
+		}
+		// gv.addln("to->seek->out");
+		// gv.addln("to->seek->out[color=RED]");
+		gv.addln(gv.end_graph());
+		System.out.println(gv.getDotSource());
+		
+		final String type = "gif";
+		final String graphFileName = resultsFileName.substring(0, resultsFileName.length() - 4) + "." + type;
+		final File out = new File(graphFileName);
+		gv.writeGraphToFile(gv.getGraph(gv.getDotSource(), type), out);
 		return graphFileName;
 	}
-	public String showGraphPath(String resultsFileName,String Path){
-		String srr[] = Path.split(" ");
-		GraphViz gv = new GraphViz();
-		 gv.addln(gv.start_graph());
-		 for(int i=0;i<vertex;i++){
-			 Node head = adj[i].getHead();
-			 Node tail = adj[i].getHead().next;
-			 while(null != tail){
-				 gv.addln(head.word + "->" + tail.word+"[label="+tail.weight+"]");
-				 tail = tail.next;
-			 }
-		 }
-		 String temp1 = null,temp2 = null;
-		 for(String s:srr){
-			 temp1 = temp2;
-			 temp2 = s;
-			 if(temp1!=null){
-				 gv.addln(temp1+"->"+temp2+"[color=red]");
-			 }
-		 }
-		 gv.addln(gv.end_graph());
-		 System.out.println(gv.getDotSource());
 
-
-       String type = "gif";
-       // String type = "dot";
-       // String type = "fig"; // open with xfig
-       // String type = "pdf";
-       // String type = "ps";
-       // String type = "svg"; // open with inkscape
-       // String type = "png";
-       // String type = "plain";
-       String pathGraphFileName = resultsFileName.substring(0, resultsFileName.length()-4) +"Path"+version+ "." + type;
-       File out = new File(pathGraphFileName);
-       gv.writeGraphToFile(gv.getGraph(gv.getDotSource(), type), out);
-       version++;
-		return pathGraphFileName;
-	}
-	public String showGraphPathes(String resultsFileName,String[] Pathes){
-		
-		GraphViz gv = new GraphViz();
-		 gv.addln(gv.start_graph());
-		 for(int i=0;i<vertex;i++){
-			 Node head = adj[i].getHead();
-			 Node tail = adj[i].getHead().next;
-			 while(null != tail){
-				 gv.addln(head.word + "->" + tail.word+"[label="+tail.weight+"]");
-				 tail = tail.next;
-			 }
-		 }
-		 //private RandomGenerator rgen = new RandomGenerator();
-		 String[] color = {"red","orange","blue","yellow","green","pink","purple"};
-		 Random rand = new Random();
-		 for(String path :Pathes){
-			// Color color = 
-			 String srr[] = path.split(" ");
-			 String temp1 = null,temp2 = null;
-			 String c = color[rand.nextInt(color.length)];
-			 for(String s:srr){
-				 temp1 = temp2;
-				 temp2 = s;
-				 if(temp1!=null){
-					 gv.addln(temp1+"->"+temp2+"[color="+c+"]");
-				 }
-				 
-			 }
-		 }
-		 gv.addln(gv.end_graph());
-		 System.out.println(gv.getDotSource());
-
-
-       String type = "gif";
-       // String type = "dot";
-       // String type = "fig"; // open with xfig
-       // String type = "pdf";
-       // String type = "ps";
-       // String type = "svg"; // open with inkscape
-       // String type = "png";
-       // String type = "plain";
-       String pathGraphFileName = resultsFileName.substring(0, resultsFileName.length()-4) +"Path"+version+ "." + type;
-       File out = new File(pathGraphFileName);
-       gv.writeGraphToFile(gv.getGraph(gv.getDotSource(), type), out);
-       version++;
-		return pathGraphFileName;
-	}
-	//×î¶ÌÂ·¾¶£¬DijkstraËã·¨¸Ä½ø£¬Çó¶àÌõ×î¶ÌÂ·¾¶
-	public String calcShortestPath(String word1,String word2)  
-		{
-			int[][] path = new int[vertex][vertex];  //¼ÇÂ¼Ò»µã×î¶ÌÂ·¾¶µÄÉÏÒ»½Úµã
-			boolean[] visited = new boolean[vertex];   //±ê¼ÇÊÇ·ñ·ÃÎÊ¹ý
-			int[] dist = new int[vertex];
-			int index1 = -1;      //word1µÄË÷Òý
-			int index2 = -1;      //word2µÄË÷Òý
-			String Reply = new String();
-			boolean flag = false;   //ÅÐ¶Ïword2ÊÇ·ñ¿É´ï
-			for(int i = 0;i< vertex;i++)
-			{
-				if(adj[i].getHead().word.equals(word1))  //ÕÒµ½ÒÔword1Îª¶¥µãµÄ±ß
-					index1 = i;
-				if(adj[i].getHead().word.equals(word2))  //ÕÒµ½ÒÔword2Îª¶¥µãµÄ±ß
-					index2 = i;
-				dist[i] = MAX;
-				visited[i] = false;
-				for(int j = 0;j< vertex;j++)
-					path[i][j] = -1;
-			}
-			
-			if(index1 == -1 || index2 == -1)
-				return "µ¥´Ê²»´æÔÚ£¡";
-			visited[index1] = true;
-			dist[index1] = 0;
-			Node Vertex = adj[index1].getHead().next;    //word1ºóÁ´½ÓµÄµã
-			while(Vertex != null)
-			{
-				dist[Vertex.num] = Vertex.weight;
-				path[Vertex.num][0] = index1;   //¿ÉÄÜ»áÓÐ¼¸ÌõÂ·¾¶
-				Vertex = Vertex.next;
-			}
-			for(int i = 1;i< vertex;i++)          //z×î¶àÑ­»·(V-1)´Î
-			{
-				int MINdist = MAX;           //µ±Ç°µÄ×î¶ÌÂ·¾¶
-				int interVertex = index1;    //Í¾¾­µÄÖÐ¼äµã
-				for(int j = 0;j<vertex;j++)
-				{
-					if(!visited[j] && dist[j] < MINdist)
-					{
-						MINdist = dist[j];
-						interVertex = j;
-					}
-				}
-				int[] interVertexs = new int[vertex];
-				int interVertexNum = 0;
-				for(int j = 0;j<vertex;j++)
-				{
-					if(!visited[j] && dist[j] == MINdist)
-					{
-						interVertexs[interVertexNum] = j;
-						visited[j] = true;
-						interVertexNum ++;
-					}
-				}
-				
-				if(visited[index2])   //ÅÐ¶ÏÊÇ·ñÊÇword2
-				{
-					flag = true;
-					break;
-				}
-				
-				
-				for(int k = 0; k < vertex;k++)
-				{
-					if(visited[k])     //¶ÔÓÚÎ´·ÃÎÊ¹ýµÄ½Úµã£¬ÅÐ¶Ï×î¶ÌÂ·¾¶¾­¹ýÄÄÐ©ÒÑ·ÃÎÊ¹ýµÄµã
-					{
-						Node NotVisited = adj[k].getHead().next;
-						while(NotVisited != null )
-						{
-							if(!visited[NotVisited.num])    //Î´·ÃÎÊ¹ýµÄµã¿ÉÒÔ¸üÐÂdist
-							{
-								if(dist[NotVisited.num] > dist[k] + NotVisited.weight)  //ÐèÒª¸üÐÂ
-								{
-									dist[NotVisited.num] = dist[k] + NotVisited.weight;
-									//¸Ä±äpath
-									path[NotVisited.num][0] = k;
-									for(int z = 1;z<vertex;z++)
-									{
-										if(path[NotVisited.num][z] >= 0)
-										    path[NotVisited.num][z] = -1;
-										else
-											break;
-									}
-								}
-								else if(dist[NotVisited.num] == dist[k] + NotVisited.weight)  //ÐèÒª¼ÓÈëÐÂµÄpath
-								{
-									for(int z = 0;z<vertex;z++)
-									{
-										if(path[NotVisited.num][z] ==-1)
-										{
-											path[NotVisited.num][z] = k;
-											break;
-										}
-									}
-								}
-							}
-							NotVisited = NotVisited.next;
-						}
-					}
-				}
-			}
-			if(flag == false)
-			{
-				Reply = "²»¿É´ï£¡";
-				return Reply;
-			}
-			Reply = DisplayPath(index1,index2,path);
-			String[] WordSplit = Reply.split("@");
-			StringBuilder ReplyBuilder = new StringBuilder();
-			
-			for(int j = 0 ; j < WordSplit.length ; j ++)
-			{
-				WordSplit[j] = WordSplit[j] + " " + word2;
-				ReplyBuilder.append(WordSplit[j]+"@");
-			}
-			return ReplyBuilder.toString();
-		}
-		
-	public String DisplayPath(int start,int end,int[][] path)
-		{//Çó¶àÌõ×î¶ÌÂ·¾¶Ê±Êä³öÂ·¾¶  ÖÐ¼ä@¼ä¸ô£¬²ÉÓÃµÝ¹é£¬µ¹Ðð
-		 //startÎªÆðÊ¼µÄÔ´µã£¬endÎªÖÕµã£¬pathÎª¶þÎ¬Êý×é
-			if (start == end)
-				return adj[start].getHead().word;
-			StringBuilder builder = new StringBuilder();
-			for(int i = 0 ; i < vertex ; i ++)
-			{
-				if(path[end][i] != -1)
-				{
-					StringBuilder Wordbuilder = new StringBuilder();
-					String MidString = DisplayPath(start,path[end][i],path);
-					String[] PathWords = MidString.split("@"); //°´@·Ö¿ª£¬´æ´¢µÄÊ±ºòÃ¿ÌõÂ·¾¶ÒÔ@·Ö¸î
-					for(int j = 0 ;j < PathWords.length;j++)
-					{
-						if(path[end][i] != start)
-							PathWords[j] = PathWords[j] +" " +  adj[path[end][i]].getHead().word;
-						
-						Wordbuilder.append(PathWords[j] + "@");
-					}
-					builder.append(Wordbuilder.toString());
-				}
-			}
-			return builder.toString();
-		}
-		
-	public String[] calcShortestPath(String word1)  //×î¶ÌÂ·¾¶£¬DijkstraËã·¨,Ö»ÓÐÒ»¸ö²ÎÊý
-		{
-			int[] path = new int[vertex];  //¼ÇÂ¼¾­¹ýµÄµã
-			boolean[] visited = new boolean[vertex];   //±ê¼ÇÊÇ·ñ·ÃÎÊ¹ý
-			int[] dist = new int[vertex];
-			int index1 = -1;      //word1µÄË÷Òý
-			//int index2 = -1;      //word2µÄË÷Òý
-			String[] Reply = new String[vertex-1];
-			for(int i = 0;i< vertex;i++)
-			{
-				if(adj[i].getHead().word.equals(word1))  //ÕÒµ½ÒÔword1Îª¶¥µãµÄ±ß
-					index1 = i;
-				dist[i] = MAX;
-				visited[i] = false;
-				
-			}
-			if(index1 == -1)
-			{
-				Reply[0] =  "µ¥´Ê²»´æÔÚ£¡";
-				return Reply;
-			}
-				
-			visited[index1] = true;
-			dist[index1] = 0;
-			Node Vertex = adj[index1].getHead().next;    //word1ºóÁ´½ÓµÄµã
-			while(Vertex != null)
-			{
-				dist[Vertex.num] = Vertex.weight;
-				path[Vertex.num] = index1;
-				Vertex = Vertex.next;
-			}
-			for(int i = 1;i< vertex;i++)          //z×î¶àÑ­»·(V-1)´Î
-			{
-				int MINdist = MAX;           //µ±Ç°µÄ×î¶ÌÂ·¾¶
-				int interVertex = index1;    //Í¾¾­µÄÖÐ¼äµã
-				for(int j = 0;j<vertex;j++)
-				{
-					if(!visited[j] && dist[j] < MINdist)
-					{
-						MINdist = dist[j];
-						interVertex = j;
-					}
-				}
-				visited[interVertex] = true;
-					
-				Node interNode = adj[interVertex].getHead().next;
-				while(interNode != null)    //¸üÐÂdist
-				{
-					if(!visited[interNode.num] && dist[interNode.num]>dist[interVertex]+interNode.weight)
-					{
-						dist[interNode.num] = dist[interVertex]+interNode.weight;
-						path[interNode.num] = interVertex;
-					}
-					interNode = interNode.next;
-				}
-			}
-			String[] WordPath = new String[vertex];
-			int num = 0;
-			for(int i = 0;i<vertex;i++)
-			{
-				if(visited[i] == false)
-				{
-					Reply[num] = adj[i].getHead().word+" ²»¿É´ï£¡";
-					num++;
-				}
-					
-			}
-			for(int i = 0; i< vertex;i++)   //Á¬Ïò¸÷¸öµãµÄ×î¶ÌÂ·¾¶
-			{
-				if(i != index1 && visited[i] == true)
-				{
-					WordPath[0] = adj[i].getHead().word;
-					int PathIndex = i;
-					int PathNum = 1;
-					while(path[PathIndex] != index1)      //½«Í¾¾¶µÄµ¥´Ê¼ÓÈëµ½WordPathÖÐ£¬Îªµ¹Ðò
-					{
-						PathIndex = path[PathIndex];
-						WordPath[PathNum] = adj[PathIndex].getHead().word;
-						PathNum++;
-					}
-					StringBuilder builder = new StringBuilder();
-					builder.append(word1);
-					for(int k = PathNum-1;k>=0;k--)
-					{
-						builder.append(" "+WordPath[k]);
-					}
-					Reply[num] = builder.toString();
-					num++;
-				}
-			}
-			
-			return Reply;
-		}
-	private int vertex;//num of vertex
-	private int edge;//num of edge
-	private LinkedList[] adj = new LinkedList[MAXNode];
-	private int version = 1;
+	/**
+	 * Õ¹Ê¾Í¼ï¿½ï¿½. duziyuan
+	 */
 	
-	public static final int MAXNode = 100;
-	public static final int MAX = 32767;
-	private static final int infinite = 1000;
+	public String showGraphPath(String resultsFileName, String path) {
+		final String[] srr = path.split(" ");
+		final GraphViz gv = new GraphViz();
+		gv.addln(gv.start_graph());
+		for (int i = 0; i < vertex; i++) {
+			final Node head = adj[i].getHead();
+			Node tail = adj[i].getHead().next;
+			while (null != tail) {
+				gv.addln(head.word + "->" + tail.word + "[label=" + tail.weight + "]");
+				tail = tail.next;
+			}
+		}
+		String temp1 = null;
+		String temp2 = null;
+		for (final String s : srr) {
+			temp1 = temp2;
+			temp2 = s;
+			if (temp1 != null) {
+				gv.addln(temp1 + "->" + temp2 + "[color=red]");
+			}
+			
+		}
+		// gv.addln("to->seek->out");
+		// gv.addln("to->seek->out[color=RED]");
+		gv.addln(gv.end_graph());
+		System.out.println(gv.getDotSource());
+		
+		final String type = "gif";
+		
+		final String pathGraphFileName = resultsFileName.substring(0, resultsFileName.length() - 4) + "Path" + version
+		        + "." + type;
+		final File out = new File(pathGraphFileName);
+		gv.writeGraphToFile(gv.getGraph(gv.getDotSource(), type), out);
+		version++;
+		return pathGraphFileName;
+	}
+	
+	/**
+	 * Õ¹Ê¾Í¼ï¿½ï¿½Â·ï¿½ï¿½. duziyuan
+	 */
+	public String showGraphPathes(String resultsFileName, String[] pathes) {
+		final GraphViz gv = new GraphViz();
+		gv.addln(gv.start_graph());
+		for (int i = 0; i < vertex; i++) {
+			final Node head = adj[i].getHead();
+			Node tail = adj[i].getHead().next;
+			while (null != tail) {
+				gv.addln(head.word + "->" + tail.word + "[label=" + tail.weight + "]");
+				tail = tail.next;
+			}
+		}
+		// private RandomGenerator rgen = new RandomGenerator();
+		final String[] color = { "red", "orange", "blue", "yellow", "green", "pink" };
+		final Random rand = new Random();
+		for (final String path : pathes) {
+			// Color color =
+			final String[] srr = path.split(" ");
+			String temp1 = null;
+			String temp2 = null;
+			final String co = color[rand.nextInt(5)];
+			for (final String s : srr) {
+				temp1 = temp2;
+				temp2 = s;
+				if (temp1 != null) {
+					gv.addln(temp1 + "->" + temp2 + "[color=" + co + "]");
+				}
+			}
+		}
+		
+		gv.addln(gv.end_graph());
+		System.out.println(gv.getDotSource());
+		
+		final String type = "gif";
+		
+		final String pathGraphFileName = resultsFileName.substring(0, resultsFileName.length() - 4) + "Path" + version
+		        + "." + type;
+		final File out = new File(pathGraphFileName);
+		gv.writeGraphToFile(gv.getGraph(gv.getDotSource(), type), out);
+		version++;
+		return pathGraphFileName;
+	}
 }
 
-class Node{
-	public String word;
-	public int weight;
-	public Node next;
-	public int num;
-	public boolean painted;
-	public Node(){
-		word = null;
-		next = null;
-		num = weight = 0;
+class LinkedList {
+	private Node	head	= null;
+	public int		nodeNum;
+	private Node	tail	= null;
+	
+	public LinkedList() {
+		nodeNum = -1;
 	}
-	public Node(String w,int n){
-		word = w;
-		weight = 1;
-		next = null;
-		num = n;
-	}
-}
-
-class LinkedList{
-	private Node head = null;
-	private Node tail = null;
-	public int nodeNum;
-	public LinkedList(){
-		nodeNum = 0-1;
-	}
-	public LinkedList(String w){
+	
+	public LinkedList(String ww) {
 		nodeNum = 0;
-		Node newNode = new Node(w,-1);
+		final Node newNode = new Node(ww, -1);
 		head = newNode;
 		tail = newNode;
 	}
-	public boolean isEmpty(){
-
-		return head==null;
-	}
-	public void addNode(String w,int n){
-		Node newNode = new Node(w,n);
-		if(isEmpty()){
+	
+	public void addNode(String ww, int nn) {
+		final Node newNode = new Node(ww, nn);
+		if (isEmpty()) {
 			head = tail = newNode;
-		}else{
+		} else {
 			tail.next = newNode;
 			tail = newNode;
 		}
 		nodeNum++;
 	}
-	public Node getHead(){
+	
+	public Node getHead() {
 		return head;
 	}
-	public Node getTail(){
+	
+	public Node getTail() {
 		return tail;
+	}
+	
+	public boolean isEmpty() {
+		
+		return head == null;
+	}
+}
+
+class Node {
+	public Node		next;
+	public int		num;
+	public boolean	painted;
+	public int		weight;
+	public String	word;
+	
+	public Node() {
+		word = null;
+		next = null;
+		num = weight = 0;
+	}
+	
+	public Node(String ww, int nn) {
+		word = ww;
+		weight = 1;
+		next = null;
+		num = nn;
 	}
 }
